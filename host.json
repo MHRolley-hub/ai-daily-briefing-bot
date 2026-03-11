@@ -1,0 +1,29 @@
+
+import { NewsItem } from "./news";
+export function buildAdaptiveCard(articles: NewsItem[], facts: string[]) {
+  return {
+    $schema: "http://adaptivecards.io/schemas/adaptive-card.json",
+    type: "AdaptiveCard",
+    version: "1.5",
+    body: [
+      { type: "TextBlock", text: "AI Daily Briefing", weight: "Bolder", size: "Large" },
+      { type: "TextBlock", text: "Top 3 AI stories (last 7 days)", weight: "Bolder", wrap: true },
+      ...articles.map((a, idx) => ({
+        type: "ColumnSet", separator: true,
+        columns: [
+          { type: "Column", width: "auto", items: [{ type: "TextBlock", text: `#${idx + 1}`, weight: "Bolder" }] },
+          {
+            type: "Column", width: "stretch", items: [
+              { type: "TextBlock", text: a.title, weight: "Bolder", wrap: true },
+              { type: "TextBlock", text: `${a.provider} • ${new Date(a.datePublished).toDateString()}`, isSubtle: true, wrap: true },
+              { type: "TextBlock", text: a.url, color: "Accent", wrap: true }
+            ]
+          }
+        ]
+      })),
+      { type: "TextBlock", text: "AI Facts of the Day", weight: "Bolder", separator: true },
+      ...facts.map(f => ({ type: "TextBlock", text: `• ${f}`, wrap: true })),
+      { type: "TextBlock", text: "_Sources: Bing News Search API; standard AI references in README._", isSubtle: true, wrap: true, separator: true }
+    ]
+  } as any;
+}

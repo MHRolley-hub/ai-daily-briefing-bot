@@ -1,0 +1,56 @@
+# AI Daily Briefing (Teams Bot) — AI‑only news + AI facts
+
+This project posts a daily **AI‑only** news briefing (Top 3 from the last 7 days, biased toward controversial or novel items) into a Microsoft Teams **group chat**, plus three university‑level AI facts. It uses:
+
+- **Bing News Search API** for compliant news retrieval (freshness, market, trending topics). citeturn2search73turn2search74
+- **Azure Functions** (Timer Trigger) for scheduling. citeturn2search8
+- **Teams Bot** proactive messaging (store chat conversation reference on first install). citeturn2search38
+- **Microsoft 365 Agents / Teams Toolkit CLI** for one‑click provision, deploy and publish. citeturn2search14turn2search15
+
+## How it works
+1. You deploy the bot with the **GitHub Action** (`.github/workflows/one-click-deploy.yml`).
+2. In Teams, add the app to your target **group chat** (e.g., “CECS 1040 – AI Literacy 2026”) and @mention it once — this stores the chat’s **conversation reference** in Azure Table Storage. A bot must be installed before it can proactively post to a chat; it can’t create a chat on its own. citeturn2search38
+3. A timer trigger runs **daily** (default 01:00 UTC = 08:00 ICT) and posts an **Adaptive Card** with Top 3 AI news + 3 facts. You can change the schedule in `api/NewsTimer/function.json` or set `WEBSITE_TIME_ZONE` to interpret CRON in your local time. citeturn2search8
+
+## News selection
+- **AI‑only filter** via query: AI/ML/LLM/Transformer/foundation model/AGI etc., plus org names (OpenAI, Anthropic, Google DeepMind, Meta, Mistral). citeturn2search73
+- **Weekly window** using `freshness=Week`. citeturn2search26
+- **Ranking** combines recency, controversy keywords (e.g., ban, lawsuit, bias, deepfake), advancement terms (breakthrough, SOTA, open‑sourced), and small boosts for reputable providers and images.
+- (Optional) you can blend **Trending Topics** as seeds from `/news/trendingtopics`. citeturn2search73
+
+## One‑click deploy via GitHub Actions
+1. Create a **private GitHub repo** and upload this project (or upload the provided ZIP contents).
+2. In your repo, add **Actions secrets** (Settings → *Secrets and variables* → *Actions*):
+
+   - `AZURE_CREDENTIALS` — Create an Azure service principal and export credentials JSON (requires Azure CLI):
+     ```bash
+     az ad sp create-for-rbac        --name "ai-briefing-sp"        --sdk-auth        --role contributor        --scopes /subscriptions/<SUBSCRIPTION_ID>
+     ```
+     Paste the **entire JSON** output into the secret. The GitHub `azure/login` action consumes this format. 
+
+   - `M365_TENANT_ID`, `M365_CLIENT_ID`, `M365_CLIENT_SECRET` — Service principal for **Teams Toolkit** headless `provision/deploy/publish`. See the Toolkit v5 headless guide for details and required permissions to publish to the org app catalog. citeturn2search15
+
+   - `BING_KEY` — Create an **Azure “Bing Search v7 / Bing Search Services”** resource (or existing), then copy **Key1** from **Keys and Endpoint** in the Azure Portal. The News Search API uses this key for `/v7.0/news/search` and `/news/trendingtopics`. citeturn2search73
+
+3. Go to **Actions** → **One‑Click Deploy to Teams (AI Daily Briefing)** → **Run workflow**.
+4. After the workflow completes, open Teams → **Apps** → find **AI Daily Briefing** → **Add to a chat** → select your group chat.
+5. Send a quick @mention to the bot so it stores the conversation reference; tomorrow morning you’ll see the first briefing.
+
+> **Note on Graph vs Bot:** Posting to Teams channels/chats using **Graph app‑only** is reserved for **import/migration**; for regular posting use a **bot** (recommended) or Graph with **delegated** user context. citeturn2search32
+
+## Configuration
+- **Time**: `api/NewsTimer/function.json` uses `"0 0 1 * * *"` (01:00 UTC). Set Function App setting `WEBSITE_TIME_ZONE` (e.g., `SE Asia Standard Time`) to run on local time. citeturn2search8turn2search12
+- **Market**: `MKT` app setting (default `en-US`). citeturn2search75
+- **Facts**: `lib/facts.ts` contains an extended set (theory, scaling, alignment, diffusion, multimodal, safety). Edit as you like.
+
+## Why not legacy incoming webhooks?
+Microsoft is retiring classic **Incoming Webhooks** in favor of **Workflows**; for automated posts to chats/channels, use Workflows or a bot. This project uses a **bot** for group chat support. citeturn2search20
+
+## References
+- Bing News Search API: endpoints & parameters (`/news`, `/news/search`, `/news/trendingtopics`, `freshness`, `mkt`). citeturn2search73turn2search26turn2search75
+- Trending Topics how‑to. citeturn2search74
+- Azure Functions Timer Trigger (CRON, timezone). citeturn2search8turn2search12
+- Teams bots proactive messaging (installation + conversation reference). citeturn2search38
+- Graph channel message POST (delegated vs app‑only import). citeturn2search32
+- Teams Toolkit / Microsoft 365 Agents Toolkit (headless CLI). citeturn2search14turn2search15
+- Incoming Webhooks retirement → Workflows. citeturn2search20

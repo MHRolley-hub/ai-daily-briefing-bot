@@ -1,2 +1,5 @@
-# ai-daily-briefing-bot
-ai daily briefing bot for teams chat
+
+node_modules/
+dist/
+.env*
+local.settings.json

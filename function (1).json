@@ -1,0 +1,28 @@
+
+version: 1.0.0
+projectId: ai-daily-briefing-bot
+metadata:
+  description: AI Daily Briefing bot (Teams) with Azure Functions + proactive posts
+environmentFolderPath: ./env
+provision:
+  name: Provision Azure + Bot
+  actions:
+    - uses: teamsApp/create
+    - uses: arm/deploy
+      with:
+        template: ./deploy/azuredeploy.bicep
+deploy:
+  name: Deploy code
+  actions:
+    - uses: cli/runNpmCommand
+      with:
+        args: npm ci && npm run build
+    - uses: azureAppService/deploy
+      with:
+        artifactFolder: dist
+publish:
+  name: Publish Teams app
+  actions:
+    - uses: teamsApp/validateManifest
+    - uses: teamsApp/zipAppPackage
+    - uses: teamsApp/publishAppPackage

@@ -1,0 +1,76 @@
+
+import fetch from "node-fetch";
+
+export interface NewsItem {
+  title: string;
+  url: string;
+  provider: string;
+  datePublished: string;
+  imageUrl?: string;
+  description?: string;
+}
+
+const AI_QUERY = [
+  `"artificial intelligence" OR AI OR "machine learning" OR "deep learning"`,
+  `LLM OR "large language model" OR Transformer OR "foundation model" OR "diffusion model"`,
+  `OpenAI OR Anthropic OR "Google DeepMind" OR "Meta AI" OR "Mistral AI"`,
+  `AGI OR "AI safety" OR alignment OR "model evals"`
+].join(" OR ");
+
+const CONTROVERSY = ["ban","regulation","lawsuit","sued","violate","fine","probe","backlash","bias","hallucination","deepfake","misuse","exploit","breach","leak","privacy","boycott","pause","moratorium","meltdown","outage"];
+const ADVANCEMENT  = ["breakthrough","SOTA","state-of-the-art","surpass","beats","exceeds","new release","released","launch","open-sourced","GA","paper","arXiv","benchmarks","evals"];
+
+function weight(text: string, words: string[], w = 1) {
+  const t = text.toLowerCase();
+  return words.reduce((acc, s) => acc + (t.includes(s.toLowerCase()) ? w : 0), 0);
+}
+
+export async function fetchWeeklyTop3(mkt = "en-US"): Promise<NewsItem[]> {
+  const key = process.env.BING_KEY!;
+  const endpoint = "https://api.bing.microsoft.com/v7.0/news/search";
+  const url = new URL(endpoint);
+  url.searchParams.set("q", AI_QUERY);
+  url.searchParams.set("freshness", "Week");
+  url.searchParams.set("mkt", mkt);
+  url.searchParams.set("sortBy", "Date");
+  url.searchParams.set("count", "50");
+
+  const res = await fetch(url.toString(), { headers: { "Ocp-Apim-Subscription-Key": key } });
+  if (!res.ok) throw new Error(`Bing News error: ${res.status} ${await res.text()}`);
+  const data = await res.json();
+
+  const items: NewsItem[] = (data.value ?? []).map((v: any) => ({
+    title: v.name,
+    url: v.url,
+    provider: v.provider?.[0]?.name ?? "",
+    datePublished: v.datePublished,
+    imageUrl: v.image?.thumbnail?.contentUrl,
+    description: v.description
+  }));
+
+  const seen = new Set<string>();
+  const ranked = items
+    .filter(i => {
+      const host = safeHost(i.url);
+      const key2 = `${host}::${i.title.trim()}`;
+      if (seen.has(key2)) return false;
+      seen.add(key2);
+      return true;
+    })
+    .map(i => {
+      const text = `${i.title} ${i.description ?? ""}`;
+      const recency = Date.parse(i.datePublished) / 1e12;
+      const spicy  = weight(text, CONTROVERSY, 2);
+      const novel  = weight(text, ADVANCEMENT, 1.5);
+      const image  = i.imageUrl ? 0.1 : 0;
+      const providerBoost = /nature|science|mit tech|arxiv|wired|the verge|ft|bloomberg|reuters|ap|bbc/i.test(i.provider) ? 0.2 : 0;
+      return { i, score: recency + spicy + novel + image + providerBoost };
+    })
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 3)
+    .map(x => x.i);
+
+  return ranked;
+}
+
+function safeHost(u: string) { try { return new URL(u).hostname.replace(/^www\./, ""); } catch { return u; } }

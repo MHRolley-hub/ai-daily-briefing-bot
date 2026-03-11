@@ -1,0 +1,17 @@
+{
+  "name": "ai-daily-briefing-bot",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "tsc -p ."
+  },
+  "dependencies": {
+    "botbuilder": "^4.22.1",
+    "botframework-connector": "^4.22.1",
+    "node-fetch": "^3.3.2",
+    "@azure/data-tables": "^13.2.2"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.5"
+  }
+}

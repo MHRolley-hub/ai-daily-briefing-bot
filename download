@@ -1,0 +1,28 @@
+
+const FACTS: string[] = [
+  // Theory & learning principles
+  "Universal Approximation: a one‑hidden‑layer NN with non‑polynomial activation can approximate any continuous function on a compact set (existence only).",
+  "No Free Lunch: averaged over all problems, no optimizer/learner is universally superior; inductive bias and data distribution matter.",
+  "VC dimension is the size of the largest set a hypothesis class can shatter; it links model capacity to sample complexity and generalization.",
+
+  // Architectures & scaling
+  "Transformer self‑attention is O(n²) per layer in sequence length, motivating linear/efficient attention and long‑context variants.",
+  "Scaling laws: loss typically follows a power law vs. model/compute/data; optimal performance balances all three at training time.",
+  "Mixture‑of‑Experts (MoE) sparsifies inference by routing tokens to a subset of experts, trading parameters for compute efficiency.",
+
+  // Methods & alignment
+  "RLHF: Reinforcement Learning from Human Feedback aligns model outputs with human preferences via a reward model and policy optimization.",
+  "Constitutional AI and DPO are alternative alignment schemes that reduce reliance on human preference data or simplify policy optimization.",
+
+  // Models & modalities
+  "Diffusion models learn to denoise from Gaussian noise steps and now dominate image generation; classifier‑free guidance steers outputs without labels.",
+  "Multimodal models unify text, images, and sometimes audio/video using shared embeddings and cross‑attention for grounded reasoning.",
+
+  // Evaluation & safety
+  "Benchmarks can overfit; robust eval mixes held‑out datasets, adversarial prompts, and out‑of‑distribution tests to assess generalization.",
+  "Safety work targets hallucination, jailbreaks, harmful content, privacy leakage, and bias; red‑team and tool‑use mitigations help."
+];
+
+export function getThreeFacts(): string[] {
+  return FACTS.sort(() => Math.random() - 0.5).slice(0, 3);
+}
